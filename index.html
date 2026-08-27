@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Power of a hypothesis test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F8FA; --surface:#FFFFFF; --line:#E6E9EF; --line-soft:#F0F2F6;
+    --ink:#0F172A; --mut:#64748B; --faint:#94A3B8;
+    --null:#4F46E5; --alt:#F59E0B; --rose:#E11D48; --emerald:#10B981; --cyan:#0891B2;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.18);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    min-height:100vh;padding:40px 20px 64px;line-height:1.55;
+    background-image:radial-gradient(120% 80% at 50% 0%, #FFFFFF 0%, var(--bg) 60%);
+  }
+  .wrap{width:80vw;max-width:80vw;margin:0 auto}
+  header{margin:0 0 20px;padding:0 2px}
+  .eyebrow{
+    display:inline-block;font-size:11px;font-weight:600;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--null);background:#EEF0FE;
+    border-radius:999px;padding:4px 10px;margin:0 0 12px;
+  }
+  h1{
+    font-size:27px;font-weight:600;letter-spacing:-.021em;line-height:1.2;
+    margin:0 0 6px;color:var(--ink);
+  }
+  h1 .dim{display:block;font-size:15px;font-weight:400;color:var(--mut);
+          letter-spacing:-.006em;margin-top:5px}
+  header p{margin:14px 0 0;color:var(--mut);font-size:14.5px;line-height:1.65;max-width:68ch}
+  header p em{color:var(--ink);font-style:normal;font-weight:500}
+  #stage{
+    background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    overflow:hidden;box-shadow:var(--shadow);margin:0 auto;
+  }
+  #app{position:relative;width:813px;height:681px;transform-origin:top left;
+       user-select:none;-webkit-user-select:none;touch-action:none}
+  #cv{position:absolute;left:0;top:0;width:813px;height:681px;display:block}
+  .ggb-input{
+    position:absolute;height:34px;padding:0 10px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);border-radius:9px;
+    font:600 15px var(--sans);letter-spacing:-.01em;
+    box-shadow:0 1px 2px rgba(15,23,42,.05);transition:border-color .15s, box-shadow .15s;
+  }
+  .ggb-input.big{height:34px;font-size:15px}
+  .ggb-input:hover{border-color:#D3D8E2}
+  .ggb-input:focus{outline:none;border-color:var(--null);box-shadow:0 0 0 3px rgba(79,70,229,.14)}
+  .cb{
+    position:absolute;display:flex;align-items:center;gap:8px;white-space:nowrap;
+    font:500 13px var(--sans);color:var(--mut);cursor:pointer;line-height:1;
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px 8px 11px;box-shadow:0 1px 2px rgba(15,23,42,.04);
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  .cb:hover{border-color:#D3D8E2;color:var(--ink);background:#FCFCFD}
+  .cb:has(input:checked){border-color:#C7CBFA;background:#F5F6FF;color:var(--ink);font-weight:500}
+  .cb input{width:15px;height:15px;margin:0;accent-color:var(--null);cursor:pointer}
+  .cb sub{font-size:.75em;line-height:0}
+  .hidden{display:none}
+  .credit{
+    margin:18px 2px 0;color:var(--faint);font-size:12.5px;line-height:1.6;
+  }
+  .credit a{color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line)}
+  .credit a:hover{color:var(--null);border-bottom-color:currentColor}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Interactive</p>
+    <h1>The power of a hypothesis test <span class="dim">A two-sided test of H<sub>0</sub>: &mu;&nbsp;=&nbsp;&mu;<sub>0</sub>, based on the sample mean</span></h1>
+    <p>Drag the <em>alternate mean</em> sideways to move it, or up and down to slide its axis.
+       Change &alpha;, the sample size <em>n</em> or the population standard deviation
+       &sigma;<sub>x</sub>, and watch the power and the two error probabilities respond.</p>
+  </header>
+
+  <div id="stage">
+    <div id="app">
+      <canvas id="cv"></canvas>
+      <label class="cb"><input type="checkbox" id="cbNull" checked><span>Show H<sub>0</sub> distribution</span></label>
+      <label class="cb"><input type="checkbox" id="cbAlt"><span>Show H<sub>A</sub> distribution</span></label>
+      <label class="cb" id="wrapPower"><input type="checkbox" id="cbPower"><span>Show power</span></label>
+      <label class="cb" id="wrapT2"><input type="checkbox" id="cbT2"><span>Show Type II error region</span></label>
+      <input id="diffBox" class="ggb-input big" style="left:465px;top:548px;width:70px" spellcheck="false">
+    </div>
+  </div>
+
+  <p class="credit">JavaScript reproduction of the GeoGebra applet
+    <a href="https://www.geogebra.org/m/e8Usa8Pp" target="_blank" rel="noopener">Power of a hypothesis test</a>
+    by the University of Melbourne School of Mathematics and Statistics.</p>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------- maths -- */
+const SQRT2PI = Math.sqrt(2 * Math.PI);
+
+function erf(x) {                       // Numerical-Recipes erfc, ~1.2e-7 rel.
+  const t = 1 / (1 + 0.5 * Math.abs(x));
+  const y = t * Math.exp(-x * x - 1.26551223 + t * (1.00002368 + t * (0.37409196 +
+      t * (0.09678418 + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 +
+      t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+  return x >= 0 ? 1 - y : y - 1;
+}
+const pdf = (x, mu, s) => { const z = (x - mu) / s; return Math.exp(-0.5 * z * z) / (s * SQRT2PI); };
+const cdf = (x, mu, s) => 0.5 * (1 + erf((x - mu) / (s * Math.SQRT2)));
+
+function probit(p) {                    // Acklam + one Halley refinement
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
+             1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
+             6.680131188771972e+01, -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
+             -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
+             3.754408661907416e+00];
+  const pl = 0.02425, ph = 1 - pl;
+  let q, r, x;
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (p < pl) {
+    q = Math.sqrt(-2 * Math.log(p));
+    x = (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= ph) {
+    q = p - 0.5; r = q * q;
+    x = (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+        (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    x = -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+  const e = cdf(x, 0, 1) - p, u = e * SQRT2PI * Math.exp(x * x / 2);
+  return x - u / (1 + x * u / 2);
+}
+const invNorm = (p, mu, s) => mu + s * probit(p);
+
+/* GeoGebra-style number output: 3 decimals, trailing zeros trimmed. */
+function fmt(v) {
+  if (!isFinite(v)) return "?";
+  let s = v.toFixed(3);
+  if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  return s === "-0" ? "0" : s;
+}
+
+/* ------------------------------------------------------------ view/model -- */
+const VW = 813, VH = 681;                 // applet size, in view pixels
+const XMIN = -5, XMAX = 5;                // leftBound .. rightBound
+const YMIN = -1.75, YMAX = 0.91;      /* the extra depth is the control row */
+const MU0 = 0;
+
+const PX = x => (x - XMIN) / (XMAX - XMIN) * VW;
+const PY = y => VH - (y - YMIN) / (YMAX - YMIN) * VH;
+const UX = p => XMIN + p / VW * (XMAX - XMIN);
+const UY = p => YMIN + (VH - p) / VH * (YMAX - YMIN);
+const OFF_MIN = -0.95, OFF_MAX = 0;
+const S0_REF = 3 / Math.sqrt(10);         /* the widest setting: sigma 3, n 10 */
+const H_REF = 0.28, H_MAX = 0.55, H_POW = 0.45;   /* drawn peak height, in y */
+const PPU = VW / (XMAX - XMIN);           // view px per x-unit
+
+const S = {                               // free objects (see ggbOnInit)
+  n: 10, sigmaX: 3, alpha: 0.05, difference: 0.75, offset: -0.95,
+  showNull: true, showAlt: false, showPower: false, showT2: false,
+  actionCount: 0, offsetDragged: false
+};
+
+function derive() {
+  const s0 = S.sigmaX / Math.sqrt(S.n);   // sigma0 = sigma1
+  const mu1 = MU0 + S.difference;
+  const R = invNorm(1 - S.alpha / 2, MU0, s0);
+  const L = invNorm(S.alpha / 2, MU0, s0);
+  const areaL = cdf(L, mu1, s0);          // leftPowerRegion
+  const areaR = 1 - cdf(R, mu1, s0);      // rightPowerRegion
+  const power = areaL + areaR;
+  /* A smaller standard error must draw a taller peak. The true density peak
+     spans a 38x range over the parameter space, far more than the window can
+     show, so the height follows a compressed power law: it rises as the SE
+     falls and only flattens out at the very narrowest settings. Both curves
+     take the same factor, so their areas stay comparable. */
+  const h = Math.min(H_MAX, H_REF * Math.pow(S0_REF / s0, H_POW));
+  const yk = h * s0 * SQRT2PI;
+  return { s0, s1: s0, mu1, L, R, areaL, areaR, power, beta: 1 - power, yk };
+}
+const nullPdf = (x, d) => d.yk * pdf(x, MU0, d.s0);
+const altF = (x, d) => d.yk * pdf(x, d.mu1, d.s1) + S.offset;
+
+/* ------------------------------------------------------------- drawing --- */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const SANS = ' "Inter",-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+const F12 = "500 12.5px" + SANS, F12B = "600 12.5px" + SANS, F17B = "600 15px" + SANS;
+const SUB = "500 9.5px" + SANS;
+const INK = "#0F172A", MUT = "#64748B", FIGBG = "#FFFFFF", ALT = "#F59E0B";
+const NUL = "#4F46E5";                    /* the null distribution, and H_0 */
+const RED = "#E11D48", GREEN = "#10B981", BLUE = "#0891B2", GREY64 = "#94A3B8";
+const RULE = "#E2E8F0";                   /* hairlines: axes, ticks, tracks */
+const HALO = "#FFFFFF";                   /* keeps labels legible over fills */
+const FILL_T1 = "rgba(225,29,72,0.16)", FILL_T2 = "rgba(8,145,178,0.13)",
+      FILL_PW = "rgba(16,185,129,0.16)";
+const W_CURVE = 2.2, W_AXIS = 1.4, W_STEM = 1.8, W_DASH = 1.4, W_EDGE = 1.5;
+
+function setupCanvas(scale) {
+  const dpr = Math.min(4, Math.max(1, window.devicePixelRatio || 1) * (scale || 1));
+  cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.miterLimit = 2;
+}
+
+function segsWidth(segs, font, sub) {
+  let w = 0;
+  for (const s of segs) {
+    const isSub = typeof s !== "string" && s.sub;
+    ctx.font = isSub ? sub : font;
+    w += ctx.measureText(typeof s === "string" ? s : s.t).width;
+  }
+  return w;
+}
+/* segs: array of strings and {t:"0",sub:true} pieces (for subscripts) */
+function text(px, py, segs, opt) {
+  opt = opt || {};
+  const font = opt.font || F12, sub = opt.sub || SUB;
+  const w = segsWidth(segs, font, sub);
+  let x = opt.align === "center" ? px - w / 2 : opt.align === "right" ? px - w : px;
+  ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round"; ctx.miterLimit = 2;
+  for (const s of segs) {
+    const isSub = typeof s !== "string" && s.sub, t = typeof s === "string" ? s : s.t;
+    const ty = py + (isSub ? (opt.subDy != null ? opt.subDy : 3) : 0);
+    ctx.font = isSub ? sub : font;
+    if (opt.halo !== false) {            /* fat outline, comic-sticker style */
+      ctx.strokeStyle = opt.halo || HALO;
+      ctx.lineWidth = opt.haloW || 3.2;
+      ctx.strokeText(t, x, ty);
+    }
+    ctx.fillStyle = opt.color || INK;
+    ctx.fillText(t, x, ty);
+    x += ctx.measureText(t).width;
+  }
+  return w;
+}
+
+/* The alternate mean: one knob, dragged in both directions -- sideways moves
+   the mean, up/down slides the whole alternate axis. */
+function meanKnob(px, py, active) {
+  ctx.save();
+  ctx.shadowColor = "rgba(15,23,42,0.22)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+  ctx.beginPath(); ctx.arc(px, py, 13, 0, 7);
+  ctx.fillStyle = active ? "#0EA271" : GREEN; ctx.fill();
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = "#FFFFFF";                  /* four-way arrow, drawn inside */
+  const t = 3.6, r = 8.4, g = 2.2;
+  const tri = (dx, dy) => {
+    ctx.beginPath();
+    ctx.moveTo(px + dx * r, py + dy * r);
+    ctx.lineTo(px + dx * g - dy * t, py + dy * g + dx * t);
+    ctx.lineTo(px + dx * g + dy * t, py + dy * g - dx * t);
+    ctx.closePath(); ctx.fill();
+  };
+  tri(0, -1); tri(0, 1); tri(-1, 0); tri(1, 0);
+  ctx.restore();
+}
+function line(x1, y1, x2, y2, color, lw, dash) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.setLineDash(dash || []);
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.moveTo(PX(x1), PY(y1)); ctx.lineTo(PX(x2), PY(y2));
+  ctx.stroke();
+  ctx.restore();
+}
+function arrowHead(px, py, dx, dy, color, size) {
+  const len = Math.hypot(dx, dy); dx /= len; dy /= len;
+  const nx = -dy, ny = dx, s = (size || 7) * 1.05;
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(px - dx * s + nx * s * 0.5, py - dy * s + ny * s * 0.5);
+  ctx.lineTo(px - dx * s - nx * s * 0.5, py - dy * s - ny * s * 0.5);
+  ctx.closePath();
+  ctx.fillStyle = color; ctx.fill();
+}
+function vector(x1, y1, x2, y2, color, lw) {
+  line(x1, y1, x2, y2, color, lw);
+  arrowHead(PX(x2), PY(y2), PX(x2) - PX(x1), PY(y2) - PY(y1), color, 8);
+}
+
+function curve(fn, color, lw) {
+  ctx.save();
+  ctx.beginPath();
+  for (let p = 0; p <= VW; p += 0.4) {
+    const y = PY(fn(UX(p)));
+    if (p === 0) ctx.moveTo(p, y); else ctx.lineTo(p, y);
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+  ctx.restore();
+}
+
+/* IntegralBetween[fn, base, a, b] -- fill + boundary, GeoGebra style. */
+function region(a, b, fn, base, fill, stroke, lw) {
+  const x0 = Math.max(a, XMIN), x1 = Math.min(b, XMAX);
+  if (!(x1 > x0)) return;
+  const p0 = PX(x0), p1 = PX(x1), steps = Math.max(2, Math.round((p1 - p0) / 0.5));
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(p0, PY(base));
+  for (let i = 0; i <= steps; i++) {
+    const x = x0 + (x1 - x0) * i / steps;
+    ctx.lineTo(PX(x), PY(fn(x)));
+  }
+  ctx.lineTo(p1, PY(base));
+  ctx.closePath();
+  ctx.fillStyle = fill; ctx.fill();
+  if (stroke) {                       /* boundary, minus the base line */
+    ctx.beginPath();
+    ctx.moveTo(p0, PY(base));
+    for (let i = 0; i <= steps; i++) {
+      const x = x0 + (x1 - x0) * i / steps;
+      ctx.lineTo(PX(x), PY(fn(x)));
+    }
+    ctx.lineTo(p1, PY(base));
+    ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* the combining macron lands beside the X in this font, so the bar is drawn. */
+function xbar(px, py) {
+  const f = "600 14px" + SANS;
+  ctx.font = f;
+  const w = ctx.measureText("X").width;
+  text(px, py, ["X"], { font: f, color: MUT });
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(px - 1, py - 15); ctx.lineTo(px + w + 1, py - 15);
+  ctx.strokeStyle = MUT; ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.restore();
+}
+
+function drawAxis(y, withTicks, withArrow) {
+  ctx.save();
+  ctx.strokeStyle = "#CBD5E1"; ctx.lineWidth = W_AXIS;
+  ctx.beginPath(); ctx.moveTo(0, PY(y)); ctx.lineTo(VW, PY(y)); ctx.stroke();
+  if (withTicks) {
+    ctx.beginPath();
+    for (let x = Math.ceil(XMIN); x <= XMAX; x++) {
+      if (x === 0) continue;
+      ctx.moveTo(PX(x), PY(y)); ctx.lineTo(PX(x), PY(y) + 5);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+  if (withArrow) arrowHead(VW - 2, PY(y), 1, 0, "#CBD5E1", 8);
+}
+
+/* --------------------------------------------------------------- sliders -- */
+const SLIDERS = [
+  { id: "alpha",  x: 90,  y: 46, len: 150, horiz: true, min: 0.01, max: 0.5, step: 0.01,
+    color: RED,   lab: () => ["α = " + fmt(S.alpha)],
+    get: () => S.alpha,  set: v => S.alpha = v,  vis: () => true },
+  { id: "n",      x: 332, y: 46, len: 150, horiz: true, min: 10,   max: 100, step: 1,
+    color: NUL,   lab: () => ["n = " + fmt(S.n)],
+    get: () => S.n,      set: v => S.n = v,      vis: () => true },
+  { id: "sigma",  x: 574, y: 46, len: 150, horiz: true, min: 0.25, max: 3,   step: 0.25,
+    color: NUL,   lab: () => ["σ", { t: "x", sub: true }, " = " + fmt(S.sigmaX)],
+    get: () => S.sigmaX, set: v => S.sigmaX = v, vis: () => true }
+];
+function sliderHandle(sl) {
+  const f = (sl.get() - sl.min) / (sl.max - sl.min);
+  return sl.horiz ? [sl.x + f * sl.len, sl.y] : [sl.x, sl.y - f * sl.len];
+}
+function drawSlider(sl) {
+  if (!sl.vis()) return;
+  const [hx, hy] = sliderHandle(sl);
+  ctx.save();
+  ctx.beginPath();                                  /* track */
+  ctx.moveTo(sl.x, sl.y); ctx.lineTo(sl.x + sl.len, sl.y);
+  ctx.strokeStyle = RULE; ctx.lineWidth = 4; ctx.stroke();
+  ctx.beginPath();                                  /* filled portion */
+  ctx.moveTo(sl.x, sl.y); ctx.lineTo(hx, sl.y);
+  ctx.strokeStyle = sl.color || NUL; ctx.lineWidth = 4; ctx.stroke();
+  ctx.shadowColor = "rgba(15,23,42,0.20)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 1;
+  ctx.beginPath(); ctx.arc(hx, hy, 8, 0, 7);        /* handle */
+  ctx.fillStyle = "#FFFFFF"; ctx.fill();
+  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.strokeStyle = sl.color || NUL; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.restore();
+
+  text(sl.x + sl.len / 2, sl.y - 16, sl.lab(),
+       { align: "center", font: F12B, color: INK });
+}
+
+/* ----------------------------------------------------------------- scene -- */
+function draw() {
+  const d = derive();
+  const off = S.offset;
+  ctx.clearRect(0, 0, VW, VH);
+  ctx.fillStyle = FIGBG; ctx.fillRect(0, 0, VW, VH);
+
+  /* distributions */
+  if (S.showNull) curve(x => nullPdf(x, d), NUL, W_CURVE);   /* nullDist */
+
+  /* Type II error region */
+  if (S.showAlt && S.showT2)
+    region(d.L, d.R, x => altF(x, d), off, FILL_T2, null, 0);
+
+  /* power regions */
+  if (S.showAlt && S.showPower) {
+    region(Math.min(XMIN, d.mu1 - 4 * d.s1), d.L, x => altF(x, d), off,
+           FILL_PW, GREEN, W_EDGE);
+    region(d.R, Math.max(XMAX, d.mu1 + 4 * d.s1), x => altF(x, d), off,
+           FILL_PW, GREEN, W_EDGE);
+  }
+
+  /* Type I error tails */
+  if (S.showNull) {
+    region(XMIN, d.L, x => nullPdf(x, d), 0, FILL_T1, RED, W_EDGE);
+    region(d.R, XMAX, x => nullPdf(x, d), 0, FILL_T1, RED, W_EDGE);
+  }
+
+  if (S.showAlt) curve(x => altF(x, d), ALT, W_CURVE);  /* f */
+
+  /* axes, on top of the shaded regions */
+  drawAxis(0, true, true);
+  if (S.showAlt) drawAxis(off, false, false);          /* baseline(x) = offset */
+
+  /* threshold stems on the null distribution */
+  const stemL = S.showNull ? nullPdf(d.L, d) : 0, stemR = S.showNull ? nullPdf(d.R, d) : 0;
+  if (S.showNull) {
+    line(d.L, stemL, d.L, 0, RED, W_STEM);
+    line(d.R, stemR, d.R, 0, RED, W_STEM);
+  }
+
+  /* rejection region markers */
+  line(d.L, stemL, d.L, 0.64, RED, W_DASH, [6, 5]);
+  line(d.R, stemR, d.R, 0.64, RED, W_DASH, [6, 5]);
+  vector(d.L, 0.60, d.L - 0.8, 0.60, RED, W_DASH);
+  vector(d.R, 0.60, d.R + 0.8, 0.60, RED, W_DASH);
+  text(PX(d.L - 0.4), PY(0.60) - 7, ["Reject H", { t: "0", sub: true }],
+       { align: "center", color: RED, font: F12B });
+  text(PX(d.R + 0.4), PY(0.60) - 7, ["Reject H", { t: "0", sub: true }],
+       { align: "center", color: RED, font: F12B });
+
+  text(PX(MU0), PY(0.033), ["μ", { t: "0", sub: true }, " = 0"],
+       { align: "center", font: F12B });
+
+  /* the population each curve is drawn from */
+  const BIG = { font: "600 34px" + SANS, sub: "600 20px" + SANS, subDy: 7,
+                color: NUL, align: "center", haloW: 4 };
+  const hy0 = PY(0) - 30;
+  if (S.showNull) text(48, hy0, ["H", { t: "0", sub: true }], BIG);
+  if (S.showAlt) {
+    /* H_A rides the alternate axis; when it would collide with H_0 it steps
+       sideways, never vertically. */
+    const hyA = PY(off) - 30, cx = Math.abs(hyA - hy0) < 46 ? 122 : 48;
+    text(cx, hyA, ["H", { t: "A", sub: true }], Object.assign({}, BIG, { color: ALT }));
+  }
+
+  /* Type I error read-out */
+  if (S.showNull)
+    text(PX(d.R + 0.35), PY(0.05907), ["Type I error: " + fmt(S.alpha)],
+         { color: RED, font: F12B });
+
+  if (S.showAlt) {
+    /* thresholds continued down to the alternate axis */
+    line(d.L, 0, d.L, off, RED, W_DASH, [6, 5]);
+    line(d.R, 0, d.R, off, RED, W_DASH, [6, 5]);
+    line(MU0, 0, MU0, off, "rgba(148,163,184,0.55)", W_DASH, [6, 5]);  /* mu0Guideline */
+    line(MU0, off, MU0, off - 0.017, MUT, W_DASH);               /* altOriginMark */
+
+    /* difference indicator */
+    if (Math.abs(S.difference) > 1e-9) {
+      vector(MU0, off - 0.13, d.mu1, off - 0.13, GREY64, W_DASH);
+      line(MU0, off - 0.12, MU0, off - 0.14, GREY64, W_DASH);
+      line(d.mu1, off - 0.12, d.mu1, off - 0.14, GREY64, W_DASH);
+      text(PX((d.mu1 + MU0) / 2 - 0.17), PY(off - 0.19), [fmt(S.difference)], { color: GREY64 });
+    }
+
+    /* region captions */
+    if (S.showT2) {
+      const mid = (d.L + d.R) / 2;
+      text(PX(mid) - 79, PY((off + altF(mid, d)) / 2) - 12,
+           ["Type II error: " + fmt(d.beta)], { color: BLUE, font: F12B });
+    }
+    if (S.showPower) {
+      const m1 = (Math.min(XMIN, d.mu1 - 4 * d.s1) + d.L) / 2;
+      const m2 = (d.R + Math.max(XMAX, d.mu1 + 4 * d.s1)) / 2;
+      text(PX(m1), PY((off + altF(m1, d)) / 2) - 5, ["Area 1"], { color: GREEN, font: F12B });
+      text(PX(m2) - 23, PY((off + altF(m2, d)) / 2) - 5, ["Area 2"], { color: GREEN, font: F12B });
+      text(PX(d.mu1 - 0.4), PY(altF(d.mu1, d) + 0.022), ["Power: " + fmt(d.power)],
+           { color: GREEN, font: F12B });
+    }
+
+    /* the draggable alternate mean */
+    if (S.actionCount < 3 && !S.offsetDragged)   /* hint, until first drag */
+      text(PX(d.mu1), PY(off + 0.13), ["Drag me!"],
+           { font: F17B, color: MUT, align: "center" });
+    const px = PX(d.mu1), py = PY(off);
+    meanKnob(px, py, !!(drag && drag.point));
+    text(px, py + 26, ["Alternate μ"], { color: GREEN, align: "center", font: F12B });
+
+    /* X-bar on the alternate axis */
+    xbar(PX(4.42), PY(off) - 12);
+  }
+
+  xbar(PX(4.42), PY(0) - 12);
+
+  /* absolutely positioned screen furniture */
+  SLIDERS.forEach(drawSlider);
+  if (S.showAlt) {
+    text(455, 572, ["Difference: μ - μ", { t: "0", sub: true }, " ="],
+         { align: "right", color: GREY64, font: F12B });
+    if (S.showPower)
+      text(406, 606, ["Power: Area 1+2 = " + fmt(d.power)],
+           { color: GREEN, font: F12B, align: "center" });
+    if (S.showT2)
+      text(406, 628, ["Type II error probability: β = " + fmt(d.beta)],
+           { color: BLUE, font: F12B, align: "center" });
+  }
+}
+
+/* ------------------------------------------------------------------- UI --- */
+const app = document.getElementById("app");
+const stage = document.getElementById("stage");
+const diffBox = document.getElementById("diffBox");
+const cbNull = document.getElementById("cbNull");
+const cbAlt = document.getElementById("cbAlt");
+const cbPower = document.getElementById("cbPower");
+const cbT2 = document.getElementById("cbT2");
+
+const PILL_Y = 644, PILL_GAP = 14;
+/* the visible pills sit in one centred row along the bottom of the applet */
+function layoutPills() {
+  const pills = [].slice.call(document.querySelectorAll(".cb"))
+                  .filter(el => !el.classList.contains("hidden"));
+  const ws = pills.map(el => el.offsetWidth);
+  let x = Math.round((VW - (ws.reduce((a, b) => a + b, 0) +
+                            PILL_GAP * (pills.length - 1))) / 2);
+  pills.forEach((el, i) => {
+    el.style.left = x + "px"; el.style.top = PILL_Y + "px";
+    x += ws[i] + PILL_GAP;
+  });
+}
+
+function syncDom() {
+  document.getElementById("wrapPower").classList.toggle("hidden", !S.showAlt);
+  document.getElementById("wrapT2").classList.toggle("hidden", !S.showAlt);
+  diffBox.classList.toggle("hidden", !S.showAlt);
+  layoutPills();
+  if (document.activeElement !== diffBox) diffBox.value = fmt(S.difference);
+}
+function update() { syncDom(); draw(); }
+
+/* mu1Point lives on baseline(x) = offset, so only x can change. */
+function setMu1(x, count) {
+  const nx = Math.min(XMAX, Math.max(XMIN, x));
+  S.difference = nx - MU0;
+  if (count) S.actionCount++;
+}
+
+cbNull.addEventListener("change", () => { S.showNull = cbNull.checked; update(); });
+cbAlt.addEventListener("change", () => { S.showAlt = cbAlt.checked; update(); });
+cbPower.addEventListener("change", () => { S.showPower = cbPower.checked; update(); });
+cbT2.addEventListener("change", () => { S.showT2 = cbT2.checked; update(); });
+
+function commitDiff() {
+  let v = parseFloat(diffBox.value.replace(",", "."));
+  if (isNaN(v)) v = S.difference;
+  setMu1(MU0 + v, true);
+  diffBox.blur(); update();
+}
+diffBox.addEventListener("keydown", e => { if (e.key === "Enter") commitDiff(); });
+diffBox.addEventListener("blur", commitDiff);
+
+/* ------------------------------------------------------- pointer handling -- */
+let drag = null;
+function capture(e) { try { cv.setPointerCapture(e.pointerId); } catch (_) {} }
+
+function toView(e) {
+  const r = cv.getBoundingClientRect();
+  return [(e.clientX - r.left) / r.width * VW, (e.clientY - r.top) / r.height * VH];
+}
+function hitSlider(vx, vy) {
+  for (const sl of SLIDERS) {
+    if (!sl.vis()) continue;
+    const [hx, hy] = sliderHandle(sl);
+    if (Math.hypot(vx - hx, vy - hy) <= 12) return sl;
+    const onLine = sl.horiz
+      ? Math.abs(vy - sl.y) <= 6 && vx >= sl.x - 4 && vx <= sl.x + sl.len + 4
+      : Math.abs(vx - sl.x) <= 6 && vy <= sl.y + 4 && vy >= sl.y - sl.len - 4;
+    if (onLine) return sl;
+  }
+  return null;
+}
+function sliderTo(sl, vx, vy) {
+  const f = sl.horiz ? (vx - sl.x) / sl.len : (sl.y - vy) / sl.len;
+  const raw = sl.min + Math.min(1, Math.max(0, f)) * (sl.max - sl.min);
+  const steps = Math.round((raw - sl.min) / sl.step);
+  sl.set(Math.min(sl.max, Math.max(sl.min, sl.min + steps * sl.step)));
+}
+function hitPoint(vx, vy) {
+  if (!S.showAlt) return false;
+  const d = derive();
+  return Math.hypot(vx - PX(d.mu1), vy - PY(S.offset)) <= 17;
+}
+
+cv.addEventListener("pointerdown", e => {
+  const [vx, vy] = toView(e);
+  const sl = hitSlider(vx, vy);
+  if (sl) { drag = { slider: sl }; sliderTo(sl, vx, vy); capture(e); update(); return; }
+  if (hitPoint(vx, vy)) {
+    drag = { point: true, dy: vy - PY(S.offset) }; capture(e); update();
+  }
+});
+cv.addEventListener("pointermove", e => {
+  const [vx, vy] = toView(e);
+  if (drag) {
+    if (drag.slider) sliderTo(drag.slider, vx, vy);
+    else {                              /* the knob moves in both directions */
+      setMu1(UX(vx), true);
+      S.offset = Math.min(OFF_MAX, Math.max(OFF_MIN, UY(vy - drag.dy)));
+      S.offsetDragged = true;
+    }
+    update();
+    return;
+  }
+  cv.style.cursor = hitPoint(vx, vy) ? "move"
+    : hitSlider(vx, vy) ? "pointer" : "default";
+});
+["pointerup", "pointercancel"].forEach(t =>
+  cv.addEventListener(t, () => { drag = null; draw(); }));
+
+/* ---------------------------------------------------------------- layout -- */
+const wrap = document.querySelector(".wrap");
+
+/* the applet takes ~80% of the viewport, in whichever direction binds first */
+function layout() {
+  const bw = parseFloat(getComputedStyle(stage).borderTopWidth) || 0;
+  const availW = Math.max(320, wrap.clientWidth - 2 * bw);
+  const availH = Math.max(320, window.innerHeight * 0.8 - 2 * bw);
+  const s = Math.min(availW / VW, availH / VH);
+  app.style.transform = "scale(" + s + ")";
+  stage.style.width = Math.round(VW * s + 2 * bw) + "px";
+  stage.style.height = Math.round(VH * s + 2 * bw) + "px";
+  setupCanvas(s);                       /* re-render at the displayed size */
+  draw();
+}
+window.addEventListener("resize", layout);
+
+update();
+layout();
+if (document.fonts && document.fonts.ready)
+  document.fonts.ready.then(() => { layoutPills(); draw(); });
+</script>
+</body>
+</html>
