@@ -9,89 +9,235 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F7F8FA; --surface:#FFFFFF; --line:#E6E9EF; --line-soft:#F0F2F6;
-    --ink:#0F172A; --mut:#64748B; --faint:#94A3B8;
-    --null:#4F46E5; --alt:#F59E0B; --rose:#E11D48; --emerald:#10B981; --cyan:#0891B2;
+    /* ===================== PALETTE — the only place colour lives ==========
+       Every colour in the page AND in the canvas is read from here (the JS
+       pulls these tokens at startup), so the whole theme retunes from this
+       block. Built on coolors.co/e2f0f9-b0dde4-286fb4-ffffff-df4c73: pale
+       blue ground, white cards, a strong blue and a pink accent. The two
+       deepened shades (crimson, teal) are darkenings of the palette's pink
+       and cyan, so the error regions stay legible as type on a pale ground. */
+
+    /* ground + type */
+    --bg:#E2F0F9;            /* the page around the figure */
+    --fig:#FFFFFF;           /* stage + canvas — the figure's own ground */
+    --surface:#FFFFFF;       /* modal — the palette's white */
+    --chip:var(--bg);        /* pills and inputs, sitting on the white figure */
+    --navy:#1F5C97;          /* header band — deepened palette blue */
+    --ink:#123A5E;           /* headings, canvas labels */
+    --mut:#3D6C93;           /* body copy, X-bar marks */
+    --faint:#6E96B4;         /* small labels, the difference arrow */
+    --line:#B0DDE4;          /* borders */
+    --rule:#B0DDE4;          /* slider tracks */
+    --axis:#89B9CE;          /* figure axis */
+    --guide:rgba(40,111,180,.42);    /* the mu-0 drop line */
+    --knob:#FFFFFF;          /* slider handles, knob ring */
+    --line-soft:#D3E9F3;
+    --mint:#B0DDE4;          /* bright accent (eyebrow pill) */
+
+    /* marks — palette blue for H0, palette pink for HA, and deepened
+       shades of the same two families for the three shaded regions */
+    --null:#286FB4;          /* H0 curve — the palette blue */
+    --alt:#DF4C73;           /* H_A curve — the palette pink */
+    --rose:#A81B45;          /* Type I error / alpha, thresholds */
+    --emerald:#0E7C8A;       /* power — deepened palette cyan */
+    --emerald-dk:#0A616C;    /* knob while grabbed */
+    --cyan:#5C93C4;          /* Type II error / beta — lightened blue */
+
+    /* region fills — same hues, held low so the curves stay dominant */
+    --fill-t1:rgba(168,27,69,.15);
+    --fill-pw:rgba(14,124,138,.18);
+    --fill-t2:rgba(92,147,196,.18);
+    --dot-rej:rgba(168,27,69,.7);
+    --dot-acc:rgba(40,111,180,.5);
+    /* ==================================================================== */
     --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    --shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.18);
+    --shadow:0 1px 2px rgba(18,58,94,.06), 0 8px 24px -12px rgba(18,58,94,.22);
   }
   *{box-sizing:border-box}
   body{
     margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);
     -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
     min-height:100vh;padding:40px 20px 64px;line-height:1.55;
-    background-image:radial-gradient(120% 80% at 50% 0%, #FFFFFF 0%, var(--bg) 60%);
   }
   .wrap{width:80vw;max-width:80vw;margin:0 auto}
-  header{margin:0 0 20px;padding:0 2px}
+  /* banner, in the palette blue */
+  header{
+    background:var(--navy);border-radius:16px;
+    padding:22px 26px 24px;margin:0 0 18px;
+    box-shadow:var(--shadow);
+  }
   .eyebrow{
     display:inline-block;font-size:11px;font-weight:600;letter-spacing:.09em;
-    text-transform:uppercase;color:var(--null);background:#EEF0FE;
+    text-transform:uppercase;color:#123A5E;background:var(--mint);
     border-radius:999px;padding:4px 10px;margin:0 0 12px;
   }
   h1{
     font-size:27px;font-weight:600;letter-spacing:-.021em;line-height:1.2;
-    margin:0 0 6px;color:var(--ink);
+    margin:0 0 6px;color:#FFFFFF;
   }
-  h1 .dim{display:block;font-size:15px;font-weight:400;color:var(--mut);
+  h1 .dim{display:block;font-size:15px;font-weight:400;color:#BFDCF2;
           letter-spacing:-.006em;margin-top:5px}
-  header p{margin:14px 0 0;color:var(--mut);font-size:14.5px;line-height:1.65;max-width:68ch}
-  header p em{color:var(--ink);font-style:normal;font-weight:500}
   #stage{
-    background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    background:var(--fig);border:1px solid var(--line);border-radius:18px;
     overflow:hidden;box-shadow:var(--shadow);margin:0 auto;
   }
-  #app{position:relative;width:813px;height:681px;transform-origin:top left;
+  #app{position:relative;width:813px;height:730px;transform-origin:top left;
        user-select:none;-webkit-user-select:none;touch-action:none}
-  #cv{position:absolute;left:0;top:0;width:813px;height:681px;display:block}
+  #cv{position:absolute;left:0;top:0;width:813px;height:730px;display:block}
+  #cv:focus{outline:none}
+  #stage:focus-within{box-shadow:0 0 0 3px rgba(40,111,180,.28),var(--shadow)}
   .ggb-input{
     position:absolute;height:34px;padding:0 10px;border:1px solid var(--line);
-    background:var(--surface);color:var(--ink);border-radius:9px;
+    background:var(--chip);color:var(--ink);border-radius:9px;
     font:600 15px var(--sans);letter-spacing:-.01em;
-    box-shadow:0 1px 2px rgba(15,23,42,.05);transition:border-color .15s, box-shadow .15s;
+    box-shadow:0 1px 2px rgba(18,58,94,.06);transition:border-color .15s, box-shadow .15s;
   }
   .ggb-input.big{height:34px;font-size:15px}
-  .ggb-input:hover{border-color:#D3D8E2}
-  .ggb-input:focus{outline:none;border-color:var(--null);box-shadow:0 0 0 3px rgba(79,70,229,.14)}
+  .ggb-input:hover{border-color:#7FC3D2}
+  .ggb-input:focus{outline:none;border-color:var(--null);box-shadow:0 0 0 3px rgba(40,111,180,.24)}
   .cb{
     position:absolute;display:flex;align-items:center;gap:8px;white-space:nowrap;
     font:500 13px var(--sans);color:var(--mut);cursor:pointer;line-height:1;
-    background:var(--surface);border:1px solid var(--line);border-radius:999px;
-    padding:8px 14px 8px 11px;box-shadow:0 1px 2px rgba(15,23,42,.04);
+    background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px 8px 11px;box-shadow:0 1px 2px rgba(18,58,94,.05);
     transition:border-color .15s, color .15s, background .15s;
   }
-  .cb:hover{border-color:#D3D8E2;color:var(--ink);background:#FCFCFD}
-  .cb:has(input:checked){border-color:#C7CBFA;background:#F5F6FF;color:var(--ink);font-weight:500}
+  .cb:hover{border-color:#7FC3D2;color:var(--ink);
+            background:#F1F8FC;background:color-mix(in oklab, #FFF 55%, var(--chip))}
+  .cb:has(input:checked){border-color:#6FB2D0;color:var(--ink);font-weight:500;
+    background:#CFE1F2;background:color-mix(in oklab, var(--null) 17%, #FFF)}
   .cb input{width:15px;height:15px;margin:0;accent-color:var(--null);cursor:pointer}
   .cb sub{font-size:.75em;line-height:0}
   .hidden{display:none}
   .credit{
-    margin:18px 2px 0;color:var(--faint);font-size:12.5px;line-height:1.6;
+    margin:18px 2px 0;color:var(--mut);font-size:12.5px;line-height:1.6;
   }
   .credit a{color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line)}
   .credit a:hover{color:var(--null);border-bottom-color:currentColor}
+
+  /* ---- second pill row: same chrome and height as the .cb checkboxes ---- */
+  .tool{
+    position:absolute;display:inline-flex;align-items:center;justify-content:center;
+    height:33px;padding:0 14px;white-space:nowrap;
+    font:500 13px var(--sans);color:var(--mut);line-height:1;cursor:pointer;
+    background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    box-shadow:0 1px 2px rgba(18,58,94,.05);
+    transition:border-color .15s, color .15s, background .15s;
+  }
+  .tool:hover{border-color:#7FC3D2;color:var(--null);
+    background:#F1F8FC;background:color-mix(in oklab, #FFF 55%, var(--chip))}
+  .tool:active{transform:translateY(1px)}
+  .tool:focus-visible{outline:none;border-color:var(--null);
+                      box-shadow:0 0 0 3px rgba(40,111,180,.24)}
+  select.tool{padding:0 8px 0 12px;color:var(--ink);font-weight:500}
+
+  /* ---------------------------- help modal ------------------------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(18,58,94,.48);
+    display:flex;align-items:center;justify-content:center;z-index:50;
+    opacity:0;pointer-events:none;transition:opacity .18s;padding:20px;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:auto}
+  .modal{
+    background:var(--surface);border-radius:16px;max-width:620px;width:100%;
+    max-height:82vh;overflow-y:auto;padding:28px 30px;box-shadow:var(--shadow);
+    transform:translateY(10px) scale(.98);transition:transform .18s;
+  }
+  .modal-overlay.open .modal{transform:none}
+  .modal h2{margin:0 0 6px;font-size:19px;font-weight:600;letter-spacing:-.02em}
+  .modal p{font-size:14px;color:var(--mut);line-height:1.65;margin:12px 0}
+  .modal p b{color:var(--ink);font-weight:600}
+  .modal .k{display:inline-block;width:11px;height:11px;border-radius:3px;
+            vertical-align:-1px;margin-right:5px}
+  .modal-close{
+    float:right;border:none;background:none;font-size:22px;line-height:1;
+    color:var(--faint);cursor:pointer;padding:2px 6px;border-radius:6px;
+  }
+  .modal-close:hover{color:var(--ink)}
+
+  /* ------------------------------ tooltip -------------------------- */
+  #tip{
+    position:absolute;z-index:20;pointer-events:none;max-width:230px;
+    background:var(--ink);color:#EEF1F6;font:500 12px/1.5 var(--sans);
+    border-radius:8px;padding:7px 10px;box-shadow:0 6px 18px -6px rgba(18,58,94,.42);
+    opacity:0;transition:opacity .12s;white-space:normal;
+  }
+  #tip.on{opacity:1}
+  #tip b{color:#fff}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <p class="eyebrow">Interactive</p>
-    <h1>The power of a hypothesis test <span class="dim">A two-sided test of H<sub>0</sub>: &mu;&nbsp;=&nbsp;&mu;<sub>0</sub>, based on the sample mean</span></h1>
-    <p>Drag the <em>alternate mean</em> sideways to move it, or up and down to slide its axis.
-       Change &alpha;, the sample size <em>n</em> or the population standard deviation
-       &sigma;<sub>x</sub>, and watch the power and the two error probabilities respond.</p>
+    <h1>The power of a hypothesis test <span class="dim">A test of H<sub>0</sub>: &mu;&nbsp;=&nbsp;0, based on the sample mean</span></h1>
   </header>
 
   <div id="stage">
     <div id="app">
-      <canvas id="cv"></canvas>
+      <canvas id="cv" tabindex="0"
+              aria-label="Interactive figure: overlapping sampling distributions under the null and alternative hypotheses. Use left and right arrow keys to move the alternate mean."></canvas>
       <label class="cb"><input type="checkbox" id="cbNull" checked><span>Show H<sub>0</sub> distribution</span></label>
       <label class="cb"><input type="checkbox" id="cbAlt"><span>Show H<sub>A</sub> distribution</span></label>
       <label class="cb" id="wrapPower"><input type="checkbox" id="cbPower"><span>Show power</span></label>
       <label class="cb" id="wrapT2"><input type="checkbox" id="cbT2"><span>Show Type II error region</span></label>
-      <input id="diffBox" class="ggb-input big" style="left:465px;top:548px;width:70px" spellcheck="false">
+      <input id="diffBox" class="ggb-input big" style="left:610px;top:550px;width:70px" spellcheck="false">
+      <!-- second pill row, laid out under the checkboxes by layoutPills() -->
+      <select class="tool" id="tailSel" aria-label="Alternative hypothesis">
+        <option value="two" selected>Two-sided test</option>
+        <option value="right">One-sided: &mu; &gt; 0</option>
+        <option value="left">One-sided: &mu; &lt; 0</option>
+      </select>
+      <button class="tool" id="btnSample1">Draw 1</button>
+      <button class="tool" id="btnSample200">Draw 200</button>
+      <button class="tool" id="btnSampleReset">Reset</button>
+      <button class="tool" id="helpBtn">? How this works</button>
+      <div id="tip"></div>
     </div>
-  </div
+  </div>
+
+  <p class="credit">Drag the sliders or the green knob. Hover any shaded region for an explanation.</p>
+</div>
+
+<div class="modal-overlay" id="helpModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <button class="modal-close" id="helpClose" aria-label="Close">&times;</button>
+    <h2 id="helpTitle">How this simulation works</h2>
+    <p>This applet visualises a test of <b>H<sub>0</sub>: &mu; = 0</b> based on
+       the sample mean X&#772;. The blue curve is the sampling distribution of X&#772; under
+       H<sub>0</sub>: a normal curve with standard error &sigma;<sub>x</sub>/&radic;n, which is why
+       increasing <em>n</em> or decreasing &sigma;<sub>x</sub> makes it narrower and taller.
+       Both curves share one horizontal axis, so their overlap is shown directly.</p>
+    <p><span class="k" style="background:var(--rose)"></span><b>Type I error (&alpha;)</b> — the red tails
+       beyond the rejection thresholds. If H<sub>0</sub> is true, this is the probability of wrongly
+       rejecting it. You set it directly with the &alpha; slider; the data cannot change it.</p>
+    <p><span class="k" style="background:var(--alt)"></span><b>The alternative H<sub>A</sub></b> — drag
+       the green knob below the axis to set the true mean &mu;<sub>A</sub>. The pink curve is the same
+       sampling distribution centred there, drawn on the same axis as H<sub>0</sub>; the grey
+       arrow joining the two peaks measures &mu;<sub>A</sub>.</p>
+    <p><span class="k" style="background:var(--emerald)"></span><b>Power</b> — the green areas: the
+       probability that a sample mean lands in a rejection region when the true mean really is
+       under H<sub>A</sub>. Increasing the true difference, <em>n</em>, or &alpha; increases power;
+       increasing &sigma;<sub>x</sub> decreases it. The total is labelled on whichever
+       rejection region carries more of it.</p>
+    <p><span class="k" style="background:var(--cyan)"></span><b>Type II error (&beta;)</b> — the blue
+       region: the probability of <em>failing</em> to reject H<sub>0</sub> when H<sub>A</sub> is
+       actually true. Note that &beta; = 1 &minus; power: every sample mean must land in exactly
+       one of the two.</p>
+    <p><b>Opacity.</b> The two right-hand sliders fade H<sub>0</sub> and H<sub>A</sub>
+       independently — useful for talking about one curve at a time while the other stays
+       faintly in view. Opacity and the show/hide checkboxes are two views of one setting:
+       sliding a curve to <b>0%</b> clears its checkbox, and ticking a cleared checkbox
+       returns that curve to 100%.</p>
+    <p><b>Sampling experiment.</b> Use <em>Draw 1</em> / <em>Draw 200</em> to simulate real samples
+       of size <em>n</em> from the alternative population (or the null one if H<sub>A</sub> is
+       hidden). Each dot below the axis is one sample mean: red if it lands in a rejection
+       region, blue if not. The running fraction of red dots converges to the theoretical power.</p>
+    <p><b>Keyboard.</b> Click the figure once, then use &larr;/&rarr; to move the alternate mean
+       (hold Shift for fine steps).</p>
+    <p>Try: set <em>n</em> = 100 with a small difference, then compare with <em>n</em> = 10, to see
+       how sample size trades off against effect size.</p>
+  </div>
 </div>
 
 <script>
@@ -146,47 +292,102 @@ function fmt(v) {
   if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
   return s === "-0" ? "0" : s;
 }
+const pct = v => Math.round(v * 100) + "%";
 
 /* ------------------------------------------------------------ view/model -- */
-const VW = 813, VH = 681;                 // applet size, in view pixels
-const XMIN = -5, XMAX = 5;                // leftBound .. rightBound
-const YMIN = -1.75, YMAX = 0.91;      /* the extra depth is the control row */
+const VW = 813, VH = 730;
+const XMIN = -5, XMAX = 5;
+/* One shared axis. The window is chosen so that the baseline (y = 0) sits at
+   pixel 490: everything above is curve, everything below is the sample-mean
+   strip, the drag knob and the numeric read-outs. */
+const YMIN = -0.4134, YMAX = 0.844;
 const MU0 = 0;
 
 const PX = x => (x - XMIN) / (XMAX - XMIN) * VW;
 const PY = y => VH - (y - YMIN) / (YMAX - YMIN) * VH;
 const UX = p => XMIN + p / VW * (XMAX - XMIN);
 const UY = p => YMIN + (VH - p) / VH * (YMAX - YMIN);
-const OFF_MIN = -0.95, OFF_MAX = 0;
-const S0_REF = 3 / Math.sqrt(10);         /* the widest setting: sigma 3, n 10 */
-const H_REF = 0.28, H_MAX = 0.55, H_POW = 0.45;   /* drawn peak height, in y */
-const PPU = VW / (XMAX - XMIN);           // view px per x-unit
 
-const S = {                               // free objects (see ggbOnInit)
-  n: 10, sigmaX: 3, alpha: 0.05, difference: 0.75, offset: -0.95,
+const S0_REF = 3 / Math.sqrt(10);
+const H_REF = 0.40, H_MAX = 0.54, H_POW = 0.45;
+const REJ_GAP = 0.16;          /* headroom above the peaks for the arrow */
+const REJ_MAX = 0.71;          /* highest the threshold leaders may reach */
+const DOT_DY = 13, KNOB_DY = 30, KNOBLAB_DY = 56;
+
+/* Tail mode: "two" | "right" | "left" */
+let tailMode = "two";
+
+/* opNull / opAlt are the single source of truth for each curve's presence:
+   visibility IS opacity, and showNull / showAlt are their mirrors (kept so the
+   rest of the code — pills, sampling, hit-testing — can ask a boolean). */
+const S = {
+  n: 10, sigmaX: 3, alpha: 0.05, difference: 0.75,
+  opNull: 1, opAlt: 0,
   showNull: true, showAlt: false, showPower: false, showT2: false,
-  actionCount: 0, offsetDragged: false
+  actionCount: 0
 };
 
+/* Smooth animation: the *drawn* parameters lerp toward the true ones. */
+const CUR = { alpha: S.alpha, n: S.n, sigmaX: S.sigmaX, difference: S.difference,
+              opNull: S.opNull, opAlt: S.opAlt };
+const ANIM_MS = 150;
+let animFrom = null, animT0 = 0;
+let rafPending = false;
+
+function snapshotAnim() {
+  animFrom = { alpha: CUR.alpha, n: CUR.n, sigmaX: CUR.sigmaX,
+               difference: CUR.difference, opNull: CUR.opNull, opAlt: CUR.opAlt };
+  animT0 = performance.now();
+  if (!rafPending) { rafPending = true; requestAnimationFrame(tick); }
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+function tick(now) {
+  rafPending = false;
+  const t = animFrom ? Math.min(1, (now - animT0) / ANIM_MS) : 1;
+  const e = 1 - Math.pow(1 - t, 3);               /* ease-out cubic */
+  if (animFrom) {
+    CUR.alpha = lerp(animFrom.alpha, S.alpha, e);
+    CUR.n = lerp(animFrom.n, S.n, e);
+    CUR.sigmaX = lerp(animFrom.sigmaX, S.sigmaX, e);
+    CUR.difference = lerp(animFrom.difference, S.difference, e);
+    CUR.opNull = lerp(animFrom.opNull, S.opNull, e);
+    CUR.opAlt = lerp(animFrom.opAlt, S.opAlt, e);
+    if (t < 1) { rafPending = true; requestAnimationFrame(tick); }
+    else animFrom = null;
+  }
+  draw();
+}
+
+/* Thresholds for the current (possibly mid-animation) parameters. */
+function thresholds(alpha, s0) {
+  if (tailMode === "right") return { L: -Infinity, R: invNorm(1 - alpha, MU0, s0) };
+  if (tailMode === "left")  return { L: invNorm(alpha, MU0, s0), R: Infinity };
+  return { L: invNorm(alpha / 2, MU0, s0), R: invNorm(1 - alpha / 2, MU0, s0) };
+}
+
 function derive() {
-  const s0 = S.sigmaX / Math.sqrt(S.n);   // sigma0 = sigma1
-  const mu1 = MU0 + S.difference;
-  const R = invNorm(1 - S.alpha / 2, MU0, s0);
-  const L = invNorm(S.alpha / 2, MU0, s0);
-  const areaL = cdf(L, mu1, s0);          // leftPowerRegion
-  const areaR = 1 - cdf(R, mu1, s0);      // rightPowerRegion
+  const s0 = CUR.sigmaX / Math.sqrt(CUR.n);
+  const mu1 = MU0 + CUR.difference;
+  const { L, R } = thresholds(CUR.alpha, s0);
+  const areaL = isFinite(L) ? cdf(L, mu1, s0) : 0;
+  const areaR = isFinite(R) ? 1 - cdf(R, mu1, s0) : 0;
   const power = areaL + areaR;
-  /* A smaller standard error must draw a taller peak. The true density peak
-     spans a 38x range over the parameter space, far more than the window can
-     show, so the height follows a compressed power law: it rises as the SE
-     falls and only flattens out at the very narrowest settings. Both curves
-     take the same factor, so their areas stay comparable. */
   const h = Math.min(H_MAX, H_REF * Math.pow(S0_REF / s0, H_POW));
   const yk = h * s0 * SQRT2PI;
-  return { s0, s1: s0, mu1, L, R, areaL, areaR, power, beta: 1 - power, yk };
+  const top = Math.min(REJ_MAX, h + REJ_GAP);
+  return { s0, s1: s0, mu1, L, R, areaL, areaR, power, beta: 1 - power, yk, h, top };
 }
+/* Both densities are drawn from the same baseline, y = 0. */
 const nullPdf = (x, d) => d.yk * pdf(x, MU0, d.s0);
-const altF = (x, d) => d.yk * pdf(x, d.mu1, d.s1) + S.offset;
+const altPdf  = (x, d) => d.yk * pdf(x, d.mu1, d.s1);
+
+/* Power at the *settled* (non-animated) parameters — used for the sampling
+   experiment, so that dots and their theoretical target always agree. */
+function theoryPower() {
+  const s0 = S.sigmaX / Math.sqrt(S.n), mu1 = MU0 + S.difference;
+  const { L, R } = thresholds(S.alpha, s0);
+  return (isFinite(L) ? cdf(L, mu1, s0) : 0) + (isFinite(R) ? 1 - cdf(R, mu1, s0) : 0);
+}
 
 /* ------------------------------------------------------------- drawing --- */
 const cv = document.getElementById("cv");
@@ -194,17 +395,27 @@ const ctx = cv.getContext("2d");
 const SANS = ' "Inter",-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
 const F12 = "500 12.5px" + SANS, F12B = "600 12.5px" + SANS, F17B = "600 15px" + SANS;
 const SUB = "500 9.5px" + SANS;
-const INK = "#0F172A", MUT = "#64748B", FIGBG = "#FFFFFF", ALT = "#F59E0B";
-const NUL = "#4F46E5";                    /* the null distribution, and H_0 */
-const RED = "#E11D48", GREEN = "#10B981", BLUE = "#0891B2", GREY64 = "#94A3B8";
-const RULE = "#E2E8F0";                   /* hairlines: axes, ticks, tracks */
-const HALO = "#FFFFFF";                   /* keeps labels legible over fills */
-const FILL_T1 = "rgba(225,29,72,0.16)", FILL_T2 = "rgba(8,145,178,0.13)",
-      FILL_PW = "rgba(16,185,129,0.16)";
-const W_CURVE = 2.2, W_AXIS = 1.4, W_STEM = 1.8, W_DASH = 1.4, W_EDGE = 1.5;
+/* Every canvas colour is pulled from the :root PALETTE block, so the figure
+   and the page can never drift apart — retheme both by editing :root only. */
+const CSSV = n => getComputedStyle(document.documentElement)
+                    .getPropertyValue(n).trim();
+const INK = CSSV("--ink"), MUT = CSSV("--mut"), GREY64 = CSSV("--faint");
+const NUL = CSSV("--null"), ALT = CSSV("--alt");
+const RED = CSSV("--rose"), GREEN = CSSV("--emerald"), BLUE = CSSV("--cyan");
+const GREEN_DK = CSSV("--emerald-dk");
+const RULE = CSSV("--rule"), AXIS = CSSV("--axis"), GUIDE = CSSV("--guide");
+const KNOB = CSSV("--knob");
+const FIGBG = CSSV("--fig") || "#FFFFFF";
+const HALO = FIGBG;                     /* text halo must equal the ground */
+const FILL_T1 = CSSV("--fill-t1"), FILL_T2 = CSSV("--fill-t2"),
+      FILL_PW = CSSV("--fill-pw");
+const DOT_REJ = CSSV("--dot-rej"), DOT_ACC = CSSV("--dot-acc");
+/* W_CURVE = the two normal curves (H0 and HA). W_EDGE = outline of the shaded
+   regions, W_STEM/W_DASH = threshold stems and dashed leaders, W_AXIS = axes. */
+const W_CURVE = 2.8, W_AXIS = 1.4, W_STEM = 1.8, W_DASH = 1.4, W_EDGE = 1.5;
 
 function setupCanvas(scale) {
-  const dpr = Math.min(4, Math.max(1, window.devicePixelRatio || 1) * (scale || 1));
+  const dpr = Math.max(1, Math.min(4, (window.devicePixelRatio || 1) * (scale || 1)));
   cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.miterLimit = 2;
@@ -219,7 +430,6 @@ function segsWidth(segs, font, sub) {
   }
   return w;
 }
-/* segs: array of strings and {t:"0",sub:true} pieces (for subscripts) */
 function text(px, py, segs, opt) {
   opt = opt || {};
   const font = opt.font || F12, sub = opt.sub || SUB;
@@ -231,7 +441,7 @@ function text(px, py, segs, opt) {
     const isSub = typeof s !== "string" && s.sub, t = typeof s === "string" ? s : s.t;
     const ty = py + (isSub ? (opt.subDy != null ? opt.subDy : 3) : 0);
     ctx.font = isSub ? sub : font;
-    if (opt.halo !== false) {            /* fat outline, comic-sticker style */
+    if (opt.halo !== false) {
       ctx.strokeStyle = opt.halo || HALO;
       ctx.lineWidth = opt.haloW || 3.2;
       ctx.strokeText(t, x, ty);
@@ -243,16 +453,30 @@ function text(px, py, segs, opt) {
   return w;
 }
 
-/* The alternate mean: one knob, dragged in both directions -- sideways moves
-   the mean, up/down slides the whole alternate axis. */
+/* Diagonal hatch fill, used as a colorblind-safe secondary cue on regions.
+   pattern: generated once per color. */
+const hatchCache = {};
+function hatch(color) {
+  if (hatchCache[color]) return hatchCache[color];
+  const c = document.createElement("canvas"); c.width = c.height = 8;
+  const g = c.getContext("2d");
+  g.strokeStyle = color; g.lineWidth = 1.4; g.globalAlpha = 0.5;
+  g.beginPath();
+  for (let i = -8; i < 16; i += 5) {
+    g.moveTo(i, -2); g.lineTo(i + 8, 8);
+  }
+  g.stroke();
+  return hatchCache[color] = ctx.createPattern(c, "repeat");
+}
 function meanKnob(px, py, active) {
   ctx.save();
-  ctx.shadowColor = "rgba(15,23,42,0.22)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+  ctx.shadowColor = "rgba(18,58,94,0.26)"; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
   ctx.beginPath(); ctx.arc(px, py, 13, 0, 7);
-  ctx.fillStyle = active ? "#0EA271" : GREEN; ctx.fill();
+  ctx.fillStyle = active ? GREEN_DK : GREEN; ctx.fill();
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = "#FFFFFF";                  /* four-way arrow, drawn inside */
+  ctx.strokeStyle = KNOB; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = KNOB;
+  /* horizontal-only control now: left / right chevrons */
   const t = 3.6, r = 8.4, g = 2.2;
   const tri = (dx, dy) => {
     ctx.beginPath();
@@ -261,7 +485,7 @@ function meanKnob(px, py, active) {
     ctx.lineTo(px + dx * g + dy * t, py + dy * g - dx * t);
     ctx.closePath(); ctx.fill();
   };
-  tri(0, -1); tri(0, 1); tri(-1, 0); tri(1, 0);
+  tri(-1, 0); tri(1, 0);
   ctx.restore();
 }
 function line(x1, y1, x2, y2, color, lw, dash) {
@@ -270,6 +494,17 @@ function line(x1, y1, x2, y2, color, lw, dash) {
   ctx.setLineDash(dash || []);
   ctx.strokeStyle = color; ctx.lineWidth = lw;
   ctx.moveTo(PX(x1), PY(y1)); ctx.lineTo(PX(x2), PY(y2));
+  ctx.stroke();
+  ctx.restore();
+}
+/* same, but straight in view pixels — used below the axis, where the layout
+   is expressed as offsets from the baseline rather than in data units */
+function pline(px1, py1, px2, py2, color, lw, dash) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.setLineDash(dash || []);
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.moveTo(px1, py1); ctx.lineTo(px2, py2);
   ctx.stroke();
   ctx.restore();
 }
@@ -299,8 +534,7 @@ function curve(fn, color, lw) {
   ctx.restore();
 }
 
-/* IntegralBetween[fn, base, a, b] -- fill + boundary, GeoGebra style. */
-function region(a, b, fn, base, fill, stroke, lw) {
+function region(a, b, fn, base, fill, stroke, lw, pattern) {
   const x0 = Math.max(a, XMIN), x1 = Math.min(b, XMAX);
   if (!(x1 > x0)) return;
   const p0 = PX(x0), p1 = PX(x1), steps = Math.max(2, Math.round((p1 - p0) / 0.5));
@@ -314,7 +548,8 @@ function region(a, b, fn, base, fill, stroke, lw) {
   ctx.lineTo(p1, PY(base));
   ctx.closePath();
   ctx.fillStyle = fill; ctx.fill();
-  if (stroke) {                       /* boundary, minus the base line */
+  if (pattern) { ctx.fillStyle = pattern; ctx.fill(); }
+  if (stroke) {
     ctx.beginPath();
     ctx.moveTo(p0, PY(base));
     for (let i = 0; i <= steps; i++) {
@@ -327,7 +562,6 @@ function region(a, b, fn, base, fill, stroke, lw) {
   ctx.restore();
 }
 
-/* the combining macron lands beside the X in this font, so the bar is drawn. */
 function xbar(px, py) {
   const f = "600 14px" + SANS;
   ctx.font = f;
@@ -342,7 +576,7 @@ function xbar(px, py) {
 
 function drawAxis(y, withTicks, withArrow) {
   ctx.save();
-  ctx.strokeStyle = "#CBD5E1"; ctx.lineWidth = W_AXIS;
+  ctx.strokeStyle = AXIS; ctx.lineWidth = W_AXIS;
   ctx.beginPath(); ctx.moveTo(0, PY(y)); ctx.lineTo(VW, PY(y)); ctx.stroke();
   if (withTicks) {
     ctx.beginPath();
@@ -353,20 +587,41 @@ function drawAxis(y, withTicks, withArrow) {
     ctx.stroke();
   }
   ctx.restore();
-  if (withArrow) arrowHead(VW - 2, PY(y), 1, 0, "#CBD5E1", 8);
+  if (withArrow) arrowHead(VW - 2, PY(y), 1, 0, AXIS, 8);
 }
 
 /* --------------------------------------------------------------- sliders -- */
+/* Setting an opacity to 0 switches its distribution off; raising it from 0
+   switches it back on. syncDom() then mirrors that onto the checkbox. */
+function setOpacity(which, v) {
+  v = Math.min(1, Math.max(0, v));
+  if (which === "null") { S.opNull = v; S.showNull = v > 0; }
+  else {
+    const was = S.showAlt;
+    S.opAlt = v; S.showAlt = v > 0;
+    if (was !== S.showAlt) clearSamples();   /* the sampled population changed */
+  }
+}
+
+const SL_Y = 46, SL_LEN = 116;
 const SLIDERS = [
-  { id: "alpha",  x: 90,  y: 46, len: 150, horiz: true, min: 0.01, max: 0.5, step: 0.01,
+  { id: "alpha",  x: 30,  y: SL_Y, len: SL_LEN, horiz: true, min: 0.01, max: 0.5, step: 0.01,
     color: RED,   lab: () => ["α = " + fmt(S.alpha)],
     get: () => S.alpha,  set: v => S.alpha = v,  vis: () => true },
-  { id: "n",      x: 332, y: 46, len: 150, horiz: true, min: 10,   max: 100, step: 1,
+  { id: "n",      x: 186, y: SL_Y, len: SL_LEN, horiz: true, min: 10,   max: 100, step: 1,
     color: NUL,   lab: () => ["n = " + fmt(S.n)],
     get: () => S.n,      set: v => S.n = v,      vis: () => true },
-  { id: "sigma",  x: 574, y: 46, len: 150, horiz: true, min: 0.25, max: 3,   step: 0.25,
+  { id: "sigma",  x: 342, y: SL_Y, len: SL_LEN, horiz: true, min: 0.25, max: 3,   step: 0.25,
     color: NUL,   lab: () => ["σ", { t: "x", sub: true }, " = " + fmt(S.sigmaX)],
-    get: () => S.sigmaX, set: v => S.sigmaX = v, vis: () => true }
+    get: () => S.sigmaX, set: v => S.sigmaX = v, vis: () => true },
+  { id: "opnull", x: 498, y: SL_Y, len: SL_LEN, horiz: true, min: 0, max: 1, step: 0.05,
+    color: NUL,   keepSamples: true,
+    lab: () => ["H", { t: "0", sub: true }, " opacity " + pct(S.opNull)],
+    get: () => S.opNull, set: v => setOpacity("null", v), vis: () => true },
+  { id: "opalt",  x: 654, y: SL_Y, len: SL_LEN, horiz: true, min: 0, max: 1, step: 0.05,
+    color: ALT,   keepSamples: true,
+    lab: () => ["H", { t: "A", sub: true }, " opacity " + pct(S.opAlt)],
+    get: () => S.opAlt,  set: v => setOpacity("alt", v),  vis: () => true }
 ];
 function sliderHandle(sl) {
   const f = (sl.get() - sl.min) / (sl.max - sl.min);
@@ -376,150 +631,264 @@ function drawSlider(sl) {
   if (!sl.vis()) return;
   const [hx, hy] = sliderHandle(sl);
   ctx.save();
-  ctx.beginPath();                                  /* track */
+  ctx.beginPath();
   ctx.moveTo(sl.x, sl.y); ctx.lineTo(sl.x + sl.len, sl.y);
   ctx.strokeStyle = RULE; ctx.lineWidth = 4; ctx.stroke();
-  ctx.beginPath();                                  /* filled portion */
+  ctx.beginPath();
   ctx.moveTo(sl.x, sl.y); ctx.lineTo(hx, sl.y);
   ctx.strokeStyle = sl.color || NUL; ctx.lineWidth = 4; ctx.stroke();
-  ctx.shadowColor = "rgba(15,23,42,0.20)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 1;
-  ctx.beginPath(); ctx.arc(hx, hy, 8, 0, 7);        /* handle */
-  ctx.fillStyle = "#FFFFFF"; ctx.fill();
+  ctx.shadowColor = "rgba(18,58,94,0.24)"; ctx.shadowBlur = 5; ctx.shadowOffsetY = 1;
+  ctx.beginPath(); ctx.arc(hx, hy, 8, 0, 7);
+  ctx.fillStyle = KNOB; ctx.fill();
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
   ctx.strokeStyle = sl.color || NUL; ctx.lineWidth = 2.5; ctx.stroke();
   ctx.restore();
+  text(sl.x + sl.len / 2, sl.y - 16, sl.lab(), { align: "center", font: F12B, color: INK });
+}
 
-  text(sl.x + sl.len / 2, sl.y - 16, sl.lab(),
-       { align: "center", font: F12B, color: INK });
+/* ------------------------------------------------------- sampling dots --- */
+const samples = [];                    /* each: {x: sample mean, rej: bool} */
+function clearSamples() { samples.length = 0; }
+/* `defer` suppresses the redraw so a batch of draws costs one repaint. */
+function drawSample(defer) {
+  const n = Math.round(S.n), mu = S.showAlt ? MU0 + S.difference : MU0, s = S.sigmaX;
+  let sum = 0;
+  for (let i = 0; i < n; i++) sum += gauss() * s + mu;
+  const m = sum / n;
+  const s0 = s / Math.sqrt(n);
+  const { L, R } = thresholds(S.alpha, s0);
+  const rej = tailMode === "right" ? m > R
+            : tailMode === "left"  ? m < L
+            : (m < L || m > R);
+  samples.push({ x: m, rej });
+  if (samples.length > 2000) samples.splice(0, samples.length - 2000);
+  if (!defer) draw();
+}
+/* Box-Muller */
+let spare = null;
+function gauss() {
+  if (spare !== null) { const v = spare; spare = null; return v; }
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  const m = Math.sqrt(-2 * Math.log(u)), a = 2 * Math.PI * v;
+  spare = m * Math.sin(a);
+  return m * Math.cos(a);
+}
+function drawSampleDots() {
+  const yPix = PY(0) + DOT_DY;
+  for (const s of samples) {
+    const px = PX(s.x);
+    if (px < 2 || px > VW - 2) continue;
+    ctx.beginPath();
+    ctx.arc(px, yPix, 7.4, 0, 7);
+    ctx.fillStyle = s.rej ? DOT_REJ : DOT_ACC;
+    ctx.fill();
+  }
 }
 
 /* ----------------------------------------------------------------- scene -- */
 function draw() {
   const d = derive();
-  const off = S.offset;
+  const AY = PY(0);
+  /* Visibility is opacity, so the fade-out animates instead of cutting. */
+  const opN = Math.min(1, Math.max(0, CUR.opNull));
+  const opA = Math.min(1, Math.max(0, CUR.opAlt));
+  const onN = opN > 0.004, onA = opA > 0.004;
+  /* controls and read-outs stay legible well past the point where their
+     curve has faded to a whisper */
+  const ctlA = Math.min(1, opA * 3);
+  const dashTop = d.top, arrY = d.top - 0.038;
+
   ctx.clearRect(0, 0, VW, VH);
   ctx.fillStyle = FIGBG; ctx.fillRect(0, 0, VW, VH);
 
-  /* distributions */
-  if (S.showNull) curve(x => nullPdf(x, d), NUL, W_CURVE);   /* nullDist */
+  const hp = hatch(RED), hpw = hatch(GREEN), ht2 = hatch(BLUE);
 
-  /* Type II error region */
-  if (S.showAlt && S.showT2)
-    region(d.L, d.R, x => altF(x, d), off, FILL_T2, null, 0);
-
-  /* power regions */
-  if (S.showAlt && S.showPower) {
-    region(Math.min(XMIN, d.mu1 - 4 * d.s1), d.L, x => altF(x, d), off,
-           FILL_PW, GREEN, W_EDGE);
-    region(d.R, Math.max(XMAX, d.mu1 + 4 * d.s1), x => altF(x, d), off,
-           FILL_PW, GREEN, W_EDGE);
+  /* ---- shaded regions, alternative first so H0's red tails read on top --- */
+  if (onA) {
+    ctx.save(); ctx.globalAlpha = opA;
+    if (S.showT2)
+      region(d.L, d.R, x => altPdf(x, d), 0, FILL_T2, null, 0, ht2);
+    if (S.showPower) {
+      region(Math.min(XMIN, d.mu1 - 4 * d.s1), d.L, x => altPdf(x, d), 0,
+             FILL_PW, GREEN, W_EDGE, hpw);
+      region(d.R, Math.max(XMAX, d.mu1 + 4 * d.s1), x => altPdf(x, d), 0,
+             FILL_PW, GREEN, W_EDGE, hpw);
+    }
+    ctx.restore();
+  }
+  if (onN) {
+    ctx.save(); ctx.globalAlpha = opN;
+    region(XMIN, d.L, x => nullPdf(x, d), 0, FILL_T1, RED, W_EDGE, hp);
+    region(d.R, XMAX, x => nullPdf(x, d), 0, FILL_T1, RED, W_EDGE, hp);
+    ctx.restore();
   }
 
-  /* Type I error tails */
-  if (S.showNull) {
-    region(XMIN, d.L, x => nullPdf(x, d), 0, FILL_T1, RED, W_EDGE);
-    region(d.R, XMAX, x => nullPdf(x, d), 0, FILL_T1, RED, W_EDGE);
-  }
+  /* ---- the two curves, both rising from the one baseline ---------------- */
+  if (onN) { ctx.save(); ctx.globalAlpha = opN; curve(x => nullPdf(x, d), NUL, W_CURVE); ctx.restore(); }
+  if (onA) { ctx.save(); ctx.globalAlpha = opA; curve(x => altPdf(x, d), ALT, W_CURVE); ctx.restore(); }
 
-  if (S.showAlt) curve(x => altF(x, d), ALT, W_CURVE);  /* f */
-
-  /* axes, on top of the shaded regions */
   drawAxis(0, true, true);
-  if (S.showAlt) drawAxis(off, false, false);          /* baseline(x) = offset */
+  drawSampleDots();
 
-  /* threshold stems on the null distribution */
-  const stemL = S.showNull ? nullPdf(d.L, d) : 0, stemR = S.showNull ? nullPdf(d.R, d) : 0;
-  if (S.showNull) {
-    line(d.L, stemL, d.L, 0, RED, W_STEM);
-    line(d.R, stemR, d.R, 0, RED, W_STEM);
+  /* ---- rejection thresholds: they belong to the test, not to a curve, so
+          they keep full opacity however far the distributions are faded --- */
+  if (tailMode !== "right") line(d.L, 0, d.L, dashTop, RED, W_DASH, [6, 5]);
+  if (tailMode !== "left")  line(d.R, 0, d.R, dashTop, RED, W_DASH, [6, 5]);
+  if (onN) {
+    ctx.save(); ctx.globalAlpha = opN;
+    if (tailMode !== "right" && isFinite(d.L)) line(d.L, 0, d.L, nullPdf(d.L, d), RED, W_STEM);
+    if (tailMode !== "left"  && isFinite(d.R)) line(d.R, 0, d.R, nullPdf(d.R, d), RED, W_STEM);
+    ctx.restore();
+  }
+  if (tailMode !== "right") {
+    vector(d.L, arrY, d.L - 0.8, arrY, RED, W_DASH);
+    text(PX(d.L - 0.4), PY(arrY) - 7, ["Reject H", { t: "0", sub: true }],
+         { align: "center", color: RED, font: F12B });
+  }
+  if (tailMode !== "left") {
+    vector(d.R, arrY, d.R + 0.8, arrY, RED, W_DASH);
+    text(PX(d.R + 0.4), PY(arrY) - 7, ["Reject H", { t: "0", sub: true }],
+         { align: "center", color: RED, font: F12B });
   }
 
-  /* rejection region markers */
-  line(d.L, stemL, d.L, 0.64, RED, W_DASH, [6, 5]);
-  line(d.R, stemR, d.R, 0.64, RED, W_DASH, [6, 5]);
-  vector(d.L, 0.60, d.L - 0.8, 0.60, RED, W_DASH);
-  vector(d.R, 0.60, d.R + 0.8, 0.60, RED, W_DASH);
-  text(PX(d.L - 0.4), PY(0.60) - 7, ["Reject H", { t: "0", sub: true }],
-       { align: "center", color: RED, font: F12B });
-  text(PX(d.R + 0.4), PY(0.60) - 7, ["Reject H", { t: "0", sub: true }],
-       { align: "center", color: RED, font: F12B });
-
-  text(PX(MU0), PY(0.033), ["μ", { t: "0", sub: true }, " = 0"],
-       { align: "center", font: F12B });
-
-  /* the population each curve is drawn from */
-  const BIG = { font: "600 34px" + SANS, sub: "600 20px" + SANS, subDy: 7,
-                color: NUL, align: "center", haloW: 4 };
-  const hy0 = PY(0) - 30;
-  if (S.showNull) text(48, hy0, ["H", { t: "0", sub: true }], BIG);
-  if (S.showAlt) {
-    /* H_A rides the alternate axis; when it would collide with H_0 it steps
-       sideways, never vertically. */
-    const hyA = PY(off) - 30, cx = Math.abs(hyA - hy0) < 46 ? 122 : 48;
-    text(cx, hyA, ["H", { t: "A", sub: true }], Object.assign({}, BIG, { color: ALT }));
+  /* ---- key, stacked in the empty top-left corner ------------------------ */
+  const BIG = { font: "600 30px" + SANS, sub: "600 18px" + SANS, subDy: 6,
+                align: "center", haloW: 4 };
+  let ky = 122;
+  if (onN) {
+    ctx.save(); ctx.globalAlpha = opN;
+    text(52, ky, ["H", { t: "0", sub: true }], Object.assign({}, BIG, { color: NUL }));
+    ctx.restore(); ky += 42;
+  }
+  if (onA) {
+    ctx.save(); ctx.globalAlpha = opA;
+    text(52, ky, ["H", { t: "A", sub: true }], Object.assign({}, BIG, { color: ALT }));
+    ctx.restore();
   }
 
-  /* Type I error read-out */
-  if (S.showNull)
-    text(PX(d.R + 0.35), PY(0.05907), ["Type I error: " + fmt(S.alpha)],
-         { color: RED, font: F12B });
+  /* ---- mu0 tick label and the X-bar axis name --------------------------- */
+  text(PX(MU0), AY - 8, ["0"], { align: "center", font: F12B });
+  xbar(PX(4.42), AY - 12);
 
-  if (S.showAlt) {
-    /* thresholds continued down to the alternate axis */
-    line(d.L, 0, d.L, off, RED, W_DASH, [6, 5]);
-    line(d.R, 0, d.R, off, RED, W_DASH, [6, 5]);
-    line(MU0, 0, MU0, off, "rgba(148,163,184,0.55)", W_DASH, [6, 5]);  /* mu0Guideline */
-    line(MU0, off, MU0, off - 0.017, MUT, W_DASH);               /* altOriginMark */
+  if (onN) {
+    ctx.save(); ctx.globalAlpha = opN;
+    if (tailMode === "left")
+      text(PX(d.L - 0.35), PY(0.055), ["Type I error: " + fmt(CUR.alpha)],
+           { color: RED, font: F12B, align: "right" });
+    else
+      text(PX(d.R + 0.35), PY(0.055), ["Type I error: " + fmt(CUR.alpha)],
+           { color: RED, font: F12B });
+    ctx.restore();
+  }
 
-    /* difference indicator */
-    if (Math.abs(S.difference) > 1e-9) {
-      vector(MU0, off - 0.13, d.mu1, off - 0.13, GREY64, W_DASH);
-      line(MU0, off - 0.12, MU0, off - 0.14, GREY64, W_DASH);
-      line(d.mu1, off - 0.12, d.mu1, off - 0.14, GREY64, W_DASH);
-      text(PX((d.mu1 + MU0) / 2 - 0.17), PY(off - 0.19), [fmt(S.difference)], { color: GREY64 });
+  if (onA) {
+    /* the difference, drawn as an arrow joining the two peaks — both curves
+       have identical height, so the arrow is exactly peak-to-peak */
+    if (Math.abs(CUR.difference) > 1e-9) {
+      const apex = PY(d.h), dpy = Math.max(96, apex - 22);
+      ctx.save(); ctx.globalAlpha = ctlA;
+      pline(PX(MU0), dpy, PX(MU0), apex, GREY64, 1, [3, 4]);
+      pline(PX(d.mu1), dpy, PX(d.mu1), apex, GREY64, 1, [3, 4]);
+      pline(PX(MU0), dpy, PX(d.mu1), dpy, GREY64, W_DASH);
+      arrowHead(PX(d.mu1), dpy, PX(d.mu1) - PX(MU0), 0, GREY64, 8);
+      arrowHead(PX(MU0), dpy, PX(MU0) - PX(d.mu1), 0, GREY64, 8);
+      text(PX((d.mu1 + MU0) / 2), dpy - 9, [fmt(CUR.difference)],
+           { color: GREY64, align: "center", font: F12B });
+      ctx.restore();
     }
 
-    /* region captions */
+    ctx.save(); ctx.globalAlpha = opA;
     if (S.showT2) {
-      const mid = (d.L + d.R) / 2;
-      text(PX(mid) - 79, PY((off + altF(mid, d)) / 2) - 12,
-           ["Type II error: " + fmt(d.beta)], { color: BLUE, font: F12B });
+      const mid = isFinite(d.L) && isFinite(d.R) ? (d.L + d.R) / 2
+                : isFinite(d.L) ? d.L + 1.2 : d.R - 1.2;
+      text(PX(mid), Math.min(PY(altPdf(mid, d) * 0.45), PY(0) - 42),
+           ["Type II error: " + fmt(d.beta)],
+           { color: BLUE, font: F12B, align: "center" });
     }
     if (S.showPower) {
       const m1 = (Math.min(XMIN, d.mu1 - 4 * d.s1) + d.L) / 2;
       const m2 = (d.R + Math.max(XMAX, d.mu1 + 4 * d.s1)) / 2;
-      text(PX(m1), PY((off + altF(m1, d)) / 2) - 5, ["Area 1"], { color: GREEN, font: F12B });
-      text(PX(m2) - 23, PY((off + altF(m2, d)) / 2) - 5, ["Area 2"], { color: GREEN, font: F12B });
-      text(PX(d.mu1 - 0.4), PY(altF(d.mu1, d) + 0.022), ["Power: " + fmt(d.power)],
-           { color: GREEN, font: F12B });
-    }
-
-    /* the draggable alternate mean */
-    if (S.actionCount < 3 && !S.offsetDragged)   /* hint, until first drag */
-      text(PX(d.mu1), PY(off + 0.13), ["Drag me!"],
-           { font: F17B, color: MUT, align: "center" });
-    const px = PX(d.mu1), py = PY(off);
-    meanKnob(px, py, !!(drag && drag.point));
-    text(px, py + 26, ["Alternate μ"], { color: GREEN, align: "center", font: F12B });
-
-    /* X-bar on the alternate axis */
-    xbar(PX(4.42), PY(off) - 12);
-  }
-
-  xbar(PX(4.42), PY(0) - 12);
-
-  /* absolutely positioned screen furniture */
-  SLIDERS.forEach(drawSlider);
-  if (S.showAlt) {
-    text(455, 572, ["Difference: μ - μ", { t: "0", sub: true }, " ="],
-         { align: "right", color: GREY64, font: F12B });
-    if (S.showPower)
-      text(406, 606, ["Power: Area 1+2 = " + fmt(d.power)],
+      /* keep the label clear of the baseline when its sliver is very thin */
+      const lift = f => Math.min(PY(altPdf(f, d) * 0.5), PY(0) - 11);
+      /* one label for the total, sat on whichever tail carries more of it */
+      const onLeft = tailMode !== "right" &&
+                     (tailMode === "left" || d.areaL >= d.areaR);
+      const mp = onLeft ? m1 : m2;
+      text(PX(mp), lift(mp), ["Power: " + fmt(d.power)],
            { color: GREEN, font: F12B, align: "center" });
-    if (S.showT2)
-      text(406, 628, ["Type II error probability: β = " + fmt(d.beta)],
-           { color: BLUE, font: F12B, align: "center" });
+    }
+    ctx.restore();
+
+    /* ---- the drag knob, hung just below the shared axis ----------------- */
+    ctx.save(); ctx.globalAlpha = ctlA;
+    const px = PX(d.mu1), py = AY + KNOB_DY;
+    pline(px, AY, px, py - 13, GREEN, 1.6, [4, 4]);
+    meanKnob(px, py, !!(drag && drag.point));
+    text(px, AY + KNOBLAB_DY, ["μ", { t: "A", sub: true }],
+         { color: GREEN, align: "center", font: F12B });
+    if (S.actionCount < 3)
+      text(px + 46, AY + KNOBLAB_DY, ["Drag me!"], { font: F17B, color: MUT });
+    ctx.restore();
   }
+
+  /* ---- empirical rejection rate, facing the mu_A box across the foot ---- */
+  if (samples.length) {
+    const rej = samples.filter(v => v.rej).length;
+    const rate = (rej / samples.length * 100).toFixed(1);
+    let tx = 56;
+    tx += text(tx, 574, ["Rejected "], { color: MUT });
+    tx += text(tx, 574, [rej + "/" + samples.length], { color: GREEN, font: F12B });
+    tx += text(tx, 574, [" = "], { color: MUT });
+    text(tx, 574, [rate + "%"], { color: GREEN, font: F12B });
+    text(56, 596, [S.showAlt ? "theory (power): " + fmt(theoryPower())
+                             : "theory (α): " + fmt(S.alpha)],
+         { color: GREY64 });
+  }
+
+  /* ---- the difference control along the foot of the figure -------------- */
+  if (onA) {
+    ctx.save(); ctx.globalAlpha = ctlA;
+    text(600, 574, ["μ", { t: "A", sub: true }, " ="],
+         { align: "right", color: GREY64, font: F12B });
+    ctx.restore();
+  }
+
+  SLIDERS.forEach(drawSlider);
+}
+
+/* --------------------------------------------------------- hover regions -- */
+/* Hotspots checked per frame against the pointer position, in *user* x and
+   *view* y: a hit needs the pointer between the baseline and the curve. Now
+   that the curves share a baseline the tails can hold two regions at once, so
+   whichever density is higher there wins the tooltip. */
+const TIP_T1 = "<b>Type I error (&alpha;)</b><br>Probability of rejecting H<sub>0</sub> when it is true. You set this directly.";
+const TIP_PW = "<b>Power</b><br>Probability of correctly rejecting H<sub>0</sub> when H<sub>A</sub> is true.";
+const TIP_T2 = "<b>Type II error (&beta;)</b><br>Probability of failing to reject H<sub>0</sub> when H<sub>A</sub> is true. &beta; = 1 &minus; power.";
+function updateTip(vx, vy) {
+  const tip = document.getElementById("tip");
+  if (drag) { tip.classList.remove("on"); return; }
+  const d = derive();
+  const ux = UX(vx), base = PY(0);
+  const inRej = ux < d.L || ux > d.R;
+  const underNull = S.showNull && vy <= base && vy >= PY(nullPdf(ux, d));
+  const underAlt  = S.showAlt  && vy <= base && vy >= PY(altPdf(ux, d));
+  const hitT1 = underNull && inRej;
+  const hitPw = underAlt && inRej && S.showPower;
+  const hitT2 = underAlt && !inRej && S.showT2;
+  let msg = null;
+  if (hitT2) msg = TIP_T2;
+  else if (hitPw && hitT1) msg = altPdf(ux, d) >= nullPdf(ux, d) ? TIP_PW : TIP_T1;
+  else if (hitPw) msg = TIP_PW;
+  else if (hitT1) msg = TIP_T1;
+  if (msg) {
+    /* #tip is a child of the scaled #app, so position it in app coordinates */
+    tip.innerHTML = msg;
+    tip.style.left = Math.min(vx + 14, VW - 250) + "px";
+    tip.style.top = (vy + 14) + "px";
+    tip.classList.add("on");
+  } else tip.classList.remove("on");
 }
 
 /* ------------------------------------------------------------------- UI --- */
@@ -530,41 +899,66 @@ const cbNull = document.getElementById("cbNull");
 const cbAlt = document.getElementById("cbAlt");
 const cbPower = document.getElementById("cbPower");
 const cbT2 = document.getElementById("cbT2");
+const tailSel = document.getElementById("tailSel");
 
-const PILL_Y = 644, PILL_GAP = 14;
-/* the visible pills sit in one centred row along the bottom of the applet */
-function layoutPills() {
-  const pills = [].slice.call(document.querySelectorAll(".cb"))
+const PILL_Y = 644, TOOL_Y = 690, PILL_GAP = 14;
+function layoutRow(sel, y) {
+  const pills = [].slice.call(document.querySelectorAll(sel))
                   .filter(el => !el.classList.contains("hidden"));
   const ws = pills.map(el => el.offsetWidth);
   let x = Math.round((VW - (ws.reduce((a, b) => a + b, 0) +
                             PILL_GAP * (pills.length - 1))) / 2);
   pills.forEach((el, i) => {
-    el.style.left = x + "px"; el.style.top = PILL_Y + "px";
+    el.style.left = x + "px"; el.style.top = y + "px";
     x += ws[i] + PILL_GAP;
   });
 }
+/* the checkbox row, then the test / sampling / help row directly beneath it */
+function layoutPills() { layoutRow(".cb", PILL_Y); layoutRow(".tool", TOOL_Y); }
 
 function syncDom() {
+  /* the checkboxes are a view of the opacities, never a separate switch */
+  cbNull.checked = S.showNull;
+  cbAlt.checked = S.showAlt;
   document.getElementById("wrapPower").classList.toggle("hidden", !S.showAlt);
   document.getElementById("wrapT2").classList.toggle("hidden", !S.showAlt);
   diffBox.classList.toggle("hidden", !S.showAlt);
-  layoutPills();
+  /* offsetWidth in layoutPills forces a reflow, so only re-run it when the
+     set of visible pills actually changes — not on every pointermove. */
+  if (S.showAlt !== pillsLaidOutForAlt) { pillsLaidOutForAlt = S.showAlt; layoutPills(); }
   if (document.activeElement !== diffBox) diffBox.value = fmt(S.difference);
 }
-function update() { syncDom(); draw(); }
+let pillsLaidOutForAlt = null;
 
-/* mu1Point lives on baseline(x) = offset, so only x can change. */
-function setMu1(x, count) {
-  const nx = Math.min(XMAX, Math.max(XMIN, x));
-  S.difference = nx - MU0;
-  if (count) S.actionCount++;
+/* Coalesce repaints: many pointermove events per frame cost one draw. */
+let drawPending = false;
+function requestDraw() {
+  if (drawPending) return;
+  drawPending = true;
+  requestAnimationFrame(() => { drawPending = false; draw(); });
 }
 
-cbNull.addEventListener("change", () => { S.showNull = cbNull.checked; update(); });
-cbAlt.addEventListener("change", () => { S.showAlt = cbAlt.checked; update(); });
-cbPower.addEventListener("change", () => { S.showPower = cbPower.checked; update(); });
-cbT2.addEventListener("change", () => { S.showT2 = cbT2.checked; update(); });
+/* Discrete change (slider click, checkbox, keyboard step, typed value): ease. */
+function update() { syncDom(); snapshotAnim(); }
+/* Continuous change (an in-progress drag): the pointer IS the animation, so
+   easing toward it only makes the figure trail the cursor. Snap and repaint.
+   Opacity is the exception — a drag of the fade slider should still land
+   exactly where the handle is, so it is snapped here too. */
+function updateLive() {
+  syncDom();
+  animFrom = null;                       /* cancel any easing in flight */
+  CUR.alpha = S.alpha; CUR.n = S.n; CUR.sigmaX = S.sigmaX;
+  CUR.difference = S.difference;
+  CUR.opNull = S.opNull; CUR.opAlt = S.opAlt;
+  requestDraw();
+}
+/* immediate redraw without animating (used on resize / font load) */
+function updateNow() { syncDom(); draw(); }
+
+cbNull.addEventListener("change", () => { setOpacity("null", cbNull.checked ? 1 : 0); update(); });
+cbAlt.addEventListener("change", () => { setOpacity("alt", cbAlt.checked ? 1 : 0); update(); });
+cbPower.addEventListener("change", () => { S.showPower = cbPower.checked; updateNow(); });
+cbT2.addEventListener("change", () => { S.showT2 = cbT2.checked; updateNow(); });
 
 function commitDiff() {
   let v = parseFloat(diffBox.value.replace(",", "."));
@@ -574,6 +968,37 @@ function commitDiff() {
 }
 diffBox.addEventListener("keydown", e => { if (e.key === "Enter") commitDiff(); });
 diffBox.addEventListener("blur", commitDiff);
+
+/* ------------------------------- tail mode ------------------------------- */
+tailSel.addEventListener("change", () => {
+  tailMode = tailSel.value;
+  clearSamples(); update();
+});
+
+/* ------------------------------- help modal ------------------------------ */
+const helpModal = document.getElementById("helpModal");
+document.getElementById("helpBtn").addEventListener("click", () => {
+  helpModal.classList.add("open");
+  document.getElementById("helpClose").focus();
+});
+document.getElementById("helpClose").addEventListener("click", () =>
+  helpModal.classList.remove("open"));
+helpModal.addEventListener("click", e => {
+  if (e.target === helpModal) helpModal.classList.remove("open");
+});
+window.addEventListener("keydown", e => {
+  if (e.key === "Escape") helpModal.classList.remove("open");
+});
+
+/* ---------------------------- sampling buttons --------------------------- */
+document.getElementById("btnSample1").addEventListener("click", () => drawSample());
+document.getElementById("btnSample200").addEventListener("click", () => {
+  for (let i = 0; i < 200; i++) drawSample(true);
+  draw();
+});
+document.getElementById("btnSampleReset").addEventListener("click", () => {
+  samples.length = 0; draw();
+});
 
 /* ------------------------------------------------------- pointer handling -- */
 let drag = null;
@@ -587,10 +1012,11 @@ function hitSlider(vx, vy) {
   for (const sl of SLIDERS) {
     if (!sl.vis()) continue;
     const [hx, hy] = sliderHandle(sl);
-    if (Math.hypot(vx - hx, vy - hy) <= 12) return sl;
+    const TOUCH = 24;                       /* generous touch radius */
+    if (Math.hypot(vx - hx, vy - hy) <= TOUCH) return sl;
     const onLine = sl.horiz
-      ? Math.abs(vy - sl.y) <= 6 && vx >= sl.x - 4 && vx <= sl.x + sl.len + 4
-      : Math.abs(vx - sl.x) <= 6 && vy <= sl.y + 4 && vy >= sl.y - sl.len - 4;
+      ? Math.abs(vy - sl.y) <= 10 && vx >= sl.x - 4 && vx <= sl.x + sl.len + 4
+      : Math.abs(vx - sl.x) <= 10 && vy <= sl.y + 4 && vy >= sl.y - sl.len - 4;
     if (onLine) return sl;
   }
   return null;
@@ -599,44 +1025,58 @@ function sliderTo(sl, vx, vy) {
   const f = sl.horiz ? (vx - sl.x) / sl.len : (sl.y - vy) / sl.len;
   const raw = sl.min + Math.min(1, Math.max(0, f)) * (sl.max - sl.min);
   const steps = Math.round((raw - sl.min) / sl.step);
-  sl.set(Math.min(sl.max, Math.max(sl.min, sl.min + steps * sl.step)));
+  const next = Math.min(sl.max, Math.max(sl.min, sl.min + steps * sl.step));
+  if (next !== sl.get()) { sl.set(next); if (!sl.keepSamples) clearSamples(); }
 }
 function hitPoint(vx, vy) {
   if (!S.showAlt) return false;
   const d = derive();
-  return Math.hypot(vx - PX(d.mu1), vy - PY(S.offset)) <= 17;
+  return Math.hypot(vx - PX(d.mu1), vy - (PY(0) + KNOB_DY)) <= 20;
+}
+function setMu1(x, count) {
+  const nx = Math.min(XMAX, Math.max(XMIN, x));
+  if (nx - MU0 !== S.difference) { S.difference = nx - MU0; clearSamples(); }
+  if (count) S.actionCount++;
 }
 
 cv.addEventListener("pointerdown", e => {
   const [vx, vy] = toView(e);
+  cv.focus();
   const sl = hitSlider(vx, vy);
-  if (sl) { drag = { slider: sl }; sliderTo(sl, vx, vy); capture(e); update(); return; }
-  if (hitPoint(vx, vy)) {
-    drag = { point: true, dy: vy - PY(S.offset) }; capture(e); update();
-  }
+  if (sl) { drag = { slider: sl }; sliderTo(sl, vx, vy); capture(e); updateLive(); return; }
+  if (hitPoint(vx, vy)) { drag = { point: true }; capture(e); update(); }
 });
 cv.addEventListener("pointermove", e => {
   const [vx, vy] = toView(e);
   if (drag) {
-    if (drag.slider) sliderTo(drag.slider, vx, vy);
-    else {                              /* the knob moves in both directions */
-      setMu1(UX(vx), true);
-      S.offset = Math.min(OFF_MAX, Math.max(OFF_MIN, UY(vy - drag.dy)));
-      S.offsetDragged = true;
-    }
-    update();
+    if (drag.slider) { sliderTo(drag.slider, vx, vy); updateLive(); }
+    else { setMu1(UX(vx), true); updateLive(); }   /* horizontal only now */
     return;
   }
-  cv.style.cursor = hitPoint(vx, vy) ? "move"
+  updateTip(vx, vy);
+  cv.style.cursor = hitPoint(vx, vy) ? "ew-resize"
     : hitSlider(vx, vy) ? "pointer" : "default";
 });
+cv.addEventListener("pointerleave", () => {
+  document.getElementById("tip").classList.remove("on");
+});
 ["pointerup", "pointercancel"].forEach(t =>
-  cv.addEventListener(t, () => { drag = null; draw(); }));
+  cv.addEventListener(t, () => { drag = null; requestDraw(); }));
+
+/* ------------------------------------------------------ keyboard control -- */
+cv.addEventListener("keydown", e => {
+  const fine = e.shiftKey ? 0.05 : 0.25;
+  let used = true;
+  if (!S.showAlt) used = false;
+  else if (e.key === "ArrowLeft")  setMu1(MU0 + S.difference - fine, true);
+  else if (e.key === "ArrowRight") setMu1(MU0 + S.difference + fine, true);
+  else used = false;
+  if (used) { e.preventDefault(); update(); }
+});
 
 /* ---------------------------------------------------------------- layout -- */
 const wrap = document.querySelector(".wrap");
 
-/* the applet takes ~80% of the viewport, in whichever direction binds first */
 function layout() {
   const bw = parseFloat(getComputedStyle(stage).borderTopWidth) || 0;
   const availW = Math.max(320, wrap.clientWidth - 2 * bw);
@@ -645,12 +1085,12 @@ function layout() {
   app.style.transform = "scale(" + s + ")";
   stage.style.width = Math.round(VW * s + 2 * bw) + "px";
   stage.style.height = Math.round(VH * s + 2 * bw) + "px";
-  setupCanvas(s);                       /* re-render at the displayed size */
-  draw();
+  setupCanvas(s);
+  updateNow();
 }
+
 window.addEventListener("resize", layout);
 
-update();
 layout();
 if (document.fonts && document.fonts.ready)
   document.fonts.ready.then(() => { layoutPills(); draw(); });
